@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import socketIOClient from "socket.io-client";
-const ENDPOINT = "https://alasdairmackenzie-mousewatcher-2hr8-4001.githubpreview.dev:4001";
+const ENDPOINT = "localhost:4001";
 
 function App() {
   const [response, setResponse] = useState("");
