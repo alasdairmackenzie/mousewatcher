@@ -1,33 +1,68 @@
 import React, { useState, useEffect } from "react";
-import socketIOClient from "socket.io-client";
+import io from "socket.io-client";
+import faker from "faker"
 
 const ENDPOINT = "http://localhost:4001";
 // const ENDPOINT = "https://1alasdairmackenzie-mousewatcher-2hr8-4001.githubpreview.dev"
 function App() {
-  const [response, setResponse] = useState("");
-  const roomId = '123';
+  const [clientList, setClientList] = useState([]);
+  const [socketId, setSocketId] = useState('');
+  const [mousePositions, setMousePositions] = useState([]);
+  const clientId = faker.name.findName()
 
-  useEffect(() => {
-    const socket = socketIOClient(ENDPOINT, {
+  useEffect(async () => {
+    const socket = io(ENDPOINT, {
       reconnection: false,
       timeout: 1000
     });
 
     socket.on("connect", () => {
-      console.log(`connected`);
+      setSocketId(socket.id);
     });
 
-    socket.on("newJoiner", ()=> {
-      console.log(`newJoiner`);
-    })
+    // socket.on("newMessage", (details) => {
+    //   console.log(`${details.clientId}: ${details.message}`);
+    // });
+    // socket.emit("message", { clientId: clientId, message: 'hello!' });
 
-    socket.emit("joinRoom", { 'roomId' : roomId});
+    socket.on("clientListChange", (clientList) => {
+      setClientList(clientList)
+    });
+
+    socket.on("mousePositionsChanged", (mousePositions) => {
+      setMousePositions(mousePositions)
+    });
+
+    window.addEventListener('mousemove', (ev) => {
+      let mousePos = {
+        x: ev.pageX,
+        y: ev.pageY
+      };
+
+      socket.emit("mouseMove", mousePos);
+
+      console.log(mousePos)
+    })
   }, []);
 
   return (
-    <p>
-      It's <time dateTime={response}>{response}</time>
-    </p>
+    <div>
+      <p>Connected as: {socketId}</p>
+      <h2>Clients:</h2>
+      <ul>
+        {clientList.map((client) => <li key={client.id}>{client.id}</li>)}
+      </ul>
+      <h2>Mouse Positions:</h2>
+      <ul>
+        {mousePositions.map((mousePosition) => <li key={mousePosition.clientId}>{mousePosition.position.x},{mousePosition.position.y}</li>)}
+      </ul>
+
+      {mousePositions.map((mousePosition) => 
+        <span key={mousePosition.clientId} style={{position : 'absolute', top : mousePosition.position.y, left: mousePosition.position.x}}>
+          {mousePosition.clientId}
+        </span>)}
+
+    </div>
   );
 }
 
