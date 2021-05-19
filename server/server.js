@@ -5,11 +5,19 @@ const socketIo = require("socket.io");
 const port = process.env.PORT || 4001;
 const app = express();
 const server = http.createServer(app);
+
 const io = socketIo(server, {
     cors: {
-      origin: "*",
+        origin: "*",
     }
 });
+
+const { createClient } = require('redis');
+const redisAdapter = require('@socket.io/redis-adapter');
+
+const pubClient = createClient({ host: 'localhost', port: 6379 });
+const subClient = pubClient.duplicate();
+io.adapter(redisAdapter(pubClient, subClient));
 
 const index = require("./routes/index");
 app.use(index);
@@ -18,20 +26,17 @@ let interval;
 
 io.on("connection", (socket) => {
     console.log("New client connected");
-    if (interval) {
-        clearInterval(interval);
-    }
-    interval = setInterval(() => getApiAndEmit(socket), 1000);
+
+    socket.on("joinRoom", (roomId) => {
+        console.log('roomId', roomId);
+        //, { 'roomId': roomId, 'users': users }
+        socket.to(roomId).emit("newJoiner");
+    });
+
     socket.on("disconnect", () => {
         console.log("Client disconnected");
         clearInterval(interval);
     });
 });
-
-const getApiAndEmit = socket => {
-    const response = new Date();
-    // Emitting a new message. Will be consumed by the client
-    socket.emit("FromAPI", response);
-};
 
 server.listen(port, () => console.log(`Listening on port ${port}`));

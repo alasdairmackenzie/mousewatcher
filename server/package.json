@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/alasdairmackenzie/mousewatcher#readme",
   "dependencies": {
+    "@socket.io/redis-adapter": "^7.0.0",
     "express": "^4.17.1",
+    "redis": "^3.1.2",
     "socket.io": "^4.1.2"
   }
 }
